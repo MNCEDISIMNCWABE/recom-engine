@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: games-recommendation
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: games-recommendation
+  template:
+    metadata:
+      labels:
+        app: games-recommendation
+    spec:
+      containers:
+      - name: games-recommendation
+        image: gcr.io/ornate-genre-425416-q8/games-recommendation:v1
+        ports:
+        - containerPort: 8080
