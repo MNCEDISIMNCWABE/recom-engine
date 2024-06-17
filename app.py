@@ -25,7 +25,7 @@ nltk.download('wordnet')
 app = Flask(__name__)
 
 # Set up Google Cloud credentials
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/Users/mncedisimncwabe/Documents/Personal_Google_Service_Account/bright-arc-328707-b5e2d782b48b.json'
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'bright-arc-328707-b5e2d782b48b.json'
 
 # Initialize the BigQuery client
 client = bigquery.Client()
