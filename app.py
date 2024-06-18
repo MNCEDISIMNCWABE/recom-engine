@@ -162,18 +162,22 @@ def get_content_based_recommendations(game_name, cosine_sim=cosine_sim, df_all_a
 @app.route('/recommend', methods=['POST'])
 def recommend():
     data = request.get_json()
-    game_name = data.get('game_name', '')
     user_id = data.get('user_id', '')
 
-    if not game_name or not user_id:
-        return jsonify({"error": "Both game name and user ID must be provided"}), 400
+    if not user_id:
+        return jsonify({"error": "User ID must be provided"}), 400
 
-    # Preprocess the game name
-    processed_game_name = NltkPreprocessingSteps(pd.Series([game_name])).to_lower().remove_html_tags().remove_accented_chars().replace_diacritics().expand_contractions().remove_numbers().remove_digits().remove_special_character().remove_white_spaces().remove_extra_newlines().replace_dots_with_spaces().remove_punctuations_except_periods().remove_words_with_numbers().remove_singleChar().remove_double_spaces().lemmatize().remove_stopwords().get_processed_text().iloc[0]
+    # Retrieve last played game for the user
+    user_game = df_user_last_game_played[df_user_last_game_played['user_id'] == user_id]['game_processed'].values
+    if len(user_game) == 0:
+        return jsonify({"error": f"No last played game found for user '{user_id}'"}), 404
 
-    idx = df_all_available_games[df_all_available_games['game_title_processed'] == processed_game_name].index
+    game_name = user_game[0]
+
+    # Get recommendations
+    idx = df_all_available_games[df_all_available_games['game_title_processed'] == game_name].index
     if len(idx) == 0:
-        return jsonify({"error": f"No similar games found for '{game_name}'"}), 404
+        return jsonify({"error": f"No similar games found for the last played game '{game_name}'"}), 404
 
     idx = idx[0]
     sim_scores = list(enumerate(cosine_sim[idx]))
@@ -194,7 +198,7 @@ def recommend():
         })
 
     return jsonify({
-        "game_name": game_name,
+        "last_played_game": game_name,
         "recommendations": recommendations
     })
 
