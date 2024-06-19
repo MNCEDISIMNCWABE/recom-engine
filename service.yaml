@@ -5,7 +5,7 @@ metadata:
 spec:
   type: LoadBalancer
   selector:
-    app: games-recomm
+    app: games-rec
   ports:
     - protocol: TCP
       port: 80
