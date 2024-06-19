@@ -1,6 +1,7 @@
 Flask==2.0.3
 google-cloud-bigquery
 google-cloud-bigquery-storage
+google-cloud-monitoring
 pandas
 numpy
 nltk
