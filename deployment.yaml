@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: games-recomm
-        image: gcr.io/ornate-genre-425416-q8/games-recomm:v5
+        image: gcr.io/ornate-genre-425416-q8/games-recomm:v6
         ports:
         - containerPort: 8080
