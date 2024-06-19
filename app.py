@@ -192,11 +192,23 @@ def record_metric(metric_name, value):
     series = monitoring_v3.TimeSeries()
     series.metric.type = f"custom.googleapis.com/{metric_name}"
     series.resource.type = "global"
-    point = series.points.add()
+
+    # Create a new point
+    point = monitoring_v3.Point()
     point.value.double_value = value
+
     now = time.time()
-    point.interval.end_time.seconds = int(now)
-    point.interval.end_time.nanos = int((now - point.interval.end_time.seconds) * 10**9)
+    seconds = int(now)
+    nanos = int((now - seconds) * 10**9)
+    interval = monitoring_v3.TimeInterval({
+        "end_time": {"seconds": seconds, "nanos": nanos}
+    })
+    point.interval = interval
+
+    # Add the point to the time series
+    series.points = [point]
+
+    # Create the time series in Cloud Monitoring
     monitoring_client.create_time_series(name=project_name, time_series=[series])
 
 @app.route('/recommend', methods=['POST'])
