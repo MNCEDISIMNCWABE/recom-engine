@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: games-recom-service
+  name: games-recomm-service
 spec:
   type: LoadBalancer
   selector:
-    app: games-recom
+    app: games-recomm
   ports:
     - protocol: TCP
       port: 80
