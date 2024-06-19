@@ -2,6 +2,8 @@ import os
 import re
 import string
 import unicodedata
+import logging
+import time
 
 import contractions
 import nltk
@@ -17,6 +19,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 from textblob import TextBlob
 from unidecode import unidecode
+from google.cloud import monitoring_v3
 
 nltk.download('stopwords')
 nltk.download('punkt')
@@ -30,13 +33,29 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'bright-arc-328707-b5e2d782b48b.j
 # Initialize the BigQuery client
 client = bigquery.Client()
 
+# Initialize Google Cloud Monitoring client
+monitoring_client = monitoring_v3.MetricServiceClient()
+project_name = f"projects/{client.project}"
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 def read_data(path_to_csv_file):
-    df = pd.read_csv(path_to_csv_file)
-    return df
+    try:
+        df = pd.read_csv(path_to_csv_file)
+        return df
+    except Exception as e:
+        logger.error(f"Error reading data from {path_to_csv_file}: {e}")
+        raise
 
 # Load data
-df_user_last_game_played = read_data('last_played_game.csv')
-df_all_available_games = read_data('all_games.csv')
+try:
+    df_user_last_game_played = read_data('last_played_game.csv')
+    df_all_available_games = read_data('all_games.csv')
+except Exception as e:
+    logger.error(f"Error loading data: {e}")
+    raise
 
 class NltkPreprocessingSteps:
     def __init__(self, X):
@@ -131,76 +150,107 @@ class NltkPreprocessingSteps:
         return self.X
 
 # Preprocess data
-txt_preproc_all_games = NltkPreprocessingSteps(df_all_available_games['game_title'])
-txt_preproc_user_games = NltkPreprocessingSteps(df_user_last_game_played['game'])
+try:
+    txt_preproc_all_games = NltkPreprocessingSteps(df_all_available_games['game_title'])
+    txt_preproc_user_games = NltkPreprocessingSteps(df_user_last_game_played['game'])
 
-processed_text_all_games = txt_preproc_all_games.to_lower().remove_html_tags().remove_accented_chars().replace_diacritics().expand_contractions().remove_numbers().remove_digits().remove_special_character().remove_white_spaces().remove_extra_newlines().replace_dots_with_spaces().remove_punctuations_except_periods().remove_words_with_numbers().remove_singleChar().remove_double_spaces().lemmatize().remove_stopwords().get_processed_text()
-processed_text_all_users = txt_preproc_user_games.to_lower().remove_html_tags().remove_accented_chars().replace_diacritics().expand_contractions().remove_numbers().remove_digits().remove_special_character().remove_white_spaces().remove_extra_newlines().replace_dots_with_spaces().remove_punctuations_except_periods().remove_words_with_numbers().remove_singleChar().remove_double_spaces().lemmatize().remove_stopwords().get_processed_text()
+    processed_text_all_games = txt_preproc_all_games.to_lower().remove_html_tags().remove_accented_chars().replace_diacritics().expand_contractions().remove_numbers().remove_digits().remove_special_character().remove_white_spaces().remove_extra_newlines().replace_dots_with_spaces().remove_punctuations_except_periods().remove_words_with_numbers().remove_singleChar().remove_double_spaces().lemmatize().remove_stopwords().get_processed_text()
+    processed_text_all_users = txt_preproc_user_games.to_lower().remove_html_tags().remove_accented_chars().replace_diacritics().expand_contractions().remove_numbers().remove_digits().remove_special_character().remove_white_spaces().remove_extra_newlines().replace_dots_with_spaces().remove_punctuations_except_periods().remove_words_with_numbers().remove_singleChar().remove_double_spaces().lemmatize().remove_stopwords().get_processed_text()
 
-df_all_available_games['game_title_processed'] = processed_text_all_games
-df_user_last_game_played['game_processed'] = processed_text_all_users
+    df_all_available_games['game_title_processed'] = processed_text_all_games
+    df_user_last_game_played['game_processed'] = processed_text_all_users
+except Exception as e:
+    logger.error(f"Error in data preprocessing: {e}")
+    raise
 
 # TF-IDF vectorization
-tfidf = TfidfVectorizer(stop_words='english')
-tfidf_matrix = tfidf.fit_transform(df_all_available_games['game_title_processed'])
-
-# Compute similarity scores
-cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
+try:
+    tfidf = TfidfVectorizer(stop_words='english')
+    tfidf_matrix = tfidf.fit_transform(df_all_available_games['game_title_processed'])
+    cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
+except Exception as e:
+    logger.error(f"Error in TF-IDF vectorization: {e}")
+    raise
 
 def get_content_based_recommendations(game_name, cosine_sim=cosine_sim, df_all_available_games=df_all_available_games):
-    idx = df_all_available_games[df_all_available_games['game_title_processed'] == game_name].index
-    if len(idx) == 0:
-        return []
-    else:
-        idx = idx[0]
-        sim_scores = list(enumerate(cosine_sim[idx]))
-        sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-        sim_scores = sim_scores[1:11]  # Top 10 similar games
-        similar_games = [df_all_available_games['game_title_processed'][i[0]] for i in sim_scores]
-        return similar_games
+    try:
+        idx = df_all_available_games[df_all_available_games['game_title_processed'] == game_name].index
+        if len(idx) == 0:
+            return []
+        else:
+            idx = idx[0]
+            sim_scores = list(enumerate(cosine_sim[idx]))
+            sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+            sim_scores = sim_scores[1:11]  # Top 10 similar games
+            similar_games = [df_all_available_games['game_title_processed'][i[0]] for i in sim_scores]
+            return similar_games
+    except Exception as e:
+        logger.error(f"Error in getting content-based recommendations: {e}")
+        raise
+
+def record_metric(metric_name, value):
+    series = monitoring_v3.TimeSeries()
+    series.metric.type = f"custom.googleapis.com/{metric_name}"
+    series.resource.type = "global"
+    point = series.points.add()
+    point.value.double_value = value
+    now = time.time()
+    point.interval.end_time.seconds = int(now)
+    point.interval.end_time.nanos = int((now - point.interval.end_time.seconds) * 10**9)
+    monitoring_client.create_time_series(name=project_name, time_series=[series])
 
 @app.route('/recommend', methods=['POST'])
 def recommend():
-    data = request.get_json()
-    user_id = data.get('user_id', '')
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id', '')
 
-    if not user_id:
-        return jsonify({"error": "User ID must be provided"}), 400
+        if not user_id:
+            record_metric('recommendation_errors', 1)
+            return jsonify({"error": "User ID must be provided"}), 400
 
-    # Retrieve last played game for the user
-    user_game = df_user_last_game_played[df_user_last_game_played['user_id'] == user_id]['game_processed'].values
-    if len(user_game) == 0:
-        return jsonify({"error": f"No last played game found for user '{user_id}'"}), 404
+        # Retrieve last played game for the user
+        user_game = df_user_last_game_played[df_user_last_game_played['user_id'] == user_id]['game_processed'].values
+        if len(user_game) == 0:
+            record_metric('recommendation_errors', 1)
+            return jsonify({"error": f"No last played game found for user '{user_id}'"}), 404
 
-    game_name = user_game[0]
+        game_name = user_game[0]
 
-    # Get recommendations
-    idx = df_all_available_games[df_all_available_games['game_title_processed'] == game_name].index
-    if len(idx) == 0:
-        return jsonify({"error": f"No similar games found for the last played game '{game_name}'"}), 404
+        # Get recommendations
+        idx = df_all_available_games[df_all_available_games['game_title_processed'] == game_name].index
+        if len(idx) == 0:
+            record_metric('recommendation_errors', 1)
+            return jsonify({"error": f"No similar games found for the last played game '{game_name}'"}), 404
 
-    idx = idx[0]
-    sim_scores = list(enumerate(cosine_sim[idx]))
-    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:11]  # Top 10
+        idx = idx[0]
+        sim_scores = list(enumerate(cosine_sim[idx]))
+        sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:11]  # Top 10
 
-    recommendations = []
-    for rank, i in enumerate(sim_scores, start=1):
-        game_info = df_all_available_games.iloc[i[0]]
-        recommendations.append({
-            "user_id": int(user_id),
-            "game_id": int(game_info['game_id']),
-            "title": game_info['game_title'],
-            "country": game_info.get('country', ''),
-            "city": game_info.get('city', ''),
-            "City_Ranking": rank,  # Rank from 1 to 10
-            "recommendation_type": "games",
-            "recommendation_activity": "user_activity"
+        recommendations = []
+        for rank, i in enumerate(sim_scores, start=1):
+            game_info = df_all_available_games.iloc[i[0]]
+            recommendations.append({
+                "user_id": int(user_id),
+                "game_id": int(game_info['game_id']),
+                "title": game_info['game_title'],
+                "country": game_info.get('country', ''),
+                "city": game_info.get('city', ''),
+                "City_Ranking": rank,  # Rank from 1 to 10
+                "recommendation_type": "games",
+                "recommendation_activity": "user_activity"
+            })
+
+        record_metric('recommendation_successes', 1)
+        return jsonify({
+            "last_played_game": game_name,
+            "recommendations": recommendations
         })
 
-    return jsonify({
-        "last_played_game": game_name,
-        "recommendations": recommendations
-    })
+    except Exception as e:
+        logger.error(f"Error in recommendation: {e}")
+        record_metric('recommendation_errors', 1)
+        return jsonify({"error": "Internal server error"}), 500
 
 def create_and_load_recommendations(df):
     schema = [
@@ -220,8 +270,8 @@ def create_and_load_recommendations(df):
     try:
         client.delete_table(table)
         print(f"Dropped table {table_id}")
-    except:
-        pass
+    except Exception as e:
+        logger.warning(f"Table {table_id} does not exist: {e}")
 
     table.clustering_fields = ["user_id"]
     table = client.create_table(table, exists_ok=True)
