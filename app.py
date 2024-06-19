@@ -206,12 +206,14 @@ def recommend():
         user_id = data.get('user_id', '')
 
         if not user_id:
+            logger.error('recommendation_errors: User ID must be provided')
             record_metric('recommendation_errors', 1)
             return jsonify({"error": "User ID must be provided"}), 400
 
         # Retrieve last played game for the user
         user_game = df_user_last_game_played[df_user_last_game_played['user_id'] == user_id]['game_processed'].values
         if len(user_game) == 0:
+            logger.error(f'recommendation_errors: No last played game found for user {user_id}')
             record_metric('recommendation_errors', 1)
             return jsonify({"error": f"No last played game found for user '{user_id}'"}), 404
 
@@ -220,6 +222,7 @@ def recommend():
         # Get recommendations
         idx = df_all_available_games[df_all_available_games['game_title_processed'] == game_name].index
         if len(idx) == 0:
+            logger.error(f'recommendation_errors: No similar games found for the last played game {game_name}')
             record_metric('recommendation_errors', 1)
             return jsonify({"error": f"No similar games found for the last played game '{game_name}'"}), 404
 
@@ -241,6 +244,7 @@ def recommend():
                 "recommendation_activity": "user_activity"
             })
 
+        logger.info('recommendation_success: Successfully generated recommendations')
         record_metric('recommendation_successes', 1)
         return jsonify({
             "last_played_game": game_name,
@@ -248,7 +252,7 @@ def recommend():
         })
 
     except Exception as e:
-        logger.error(f"Error in recommendation: {e}")
+        logger.error(f'recommendation_errors: Error in recommendation: {e}')
         record_metric('recommendation_errors', 1)
         return jsonify({"error": "Internal server error"}), 500
 
