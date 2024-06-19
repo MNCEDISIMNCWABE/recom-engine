@@ -29,13 +29,14 @@ app = Flask(__name__)
 
 # Set up Google Cloud credentials
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'bright-arc-328707-b5e2d782b48b.json'
+os.environ["GOOGLE_CLOUD_PROJECT"] = 'ornate-genre-425416-q8'
 
 # Initialize the BigQuery client
 client = bigquery.Client()
 
 # Initialize Google Cloud Monitoring client
 monitoring_client = monitoring_v3.MetricServiceClient()
-project_name = f"projects/{client.project}"
+project_name = f"projects/{os.getenv('GOOGLE_CLOUD_PROJECT')}"
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
