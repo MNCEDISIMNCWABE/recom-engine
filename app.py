@@ -2,8 +2,6 @@ import os
 import re
 import string
 import unicodedata
-import logging
-import time
 
 import contractions
 import nltk
@@ -19,7 +17,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 from textblob import TextBlob
 from unidecode import unidecode
-from google.cloud import monitoring_v3
 
 nltk.download('stopwords')
 nltk.download('punkt')
@@ -29,25 +26,16 @@ app = Flask(__name__)
 
 # Set up Google Cloud credentials
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'bright-arc-328707-b5e2d782b48b.json'
-os.environ["GOOGLE_CLOUD_PROJECT"] = 'ornate-genre-425416-q8'
 
 # Initialize the BigQuery client
 client = bigquery.Client()
-
-# Initialize Google Cloud Monitoring client
-monitoring_client = monitoring_v3.MetricServiceClient()
-project_name = f"projects/{os.getenv('GOOGLE_CLOUD_PROJECT')}"
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 def read_data(path_to_csv_file):
     try:
         df = pd.read_csv(path_to_csv_file)
         return df
     except Exception as e:
-        logger.error(f"Error reading data from {path_to_csv_file}: {e}")
+        app.logger.error(f"Error reading data from {path_to_csv_file}: {e}")
         raise
 
 # Load data
@@ -55,7 +43,7 @@ try:
     df_user_last_game_played = read_data('last_played_game.csv')
     df_all_available_games = read_data('all_games.csv')
 except Exception as e:
-    logger.error(f"Error loading data: {e}")
+    app.logger.error(f"Error loading data: {e}")
     raise
 
 class NltkPreprocessingSteps:
@@ -67,85 +55,165 @@ class NltkPreprocessingSteps:
         self.remove_punctuations = string.punctuation.replace('.','')
 
     def remove_html_tags(self):
-        self.X = self.X.apply(lambda x: BeautifulSoup(x, 'html.parser').get_text())
-        return self
+        try:
+            self.X = self.X.apply(lambda x: BeautifulSoup(x, 'html.parser').get_text())
+            return self
+        except Exception as e:
+            app.logger.error(f"Error removing HTML tags: {e}")
+            raise
 
     def remove_accented_chars(self):
-        self.X = self.X.apply(lambda x: unicodedata.normalize('NFKD', x).encode('ascii', 'ignore').decode('utf-8', 'ignore'))
-        return self
+        try:
+            self.X = self.X.apply(lambda x: unicodedata.normalize('NFKD', x).encode('ascii', 'ignore').decode('utf-8', 'ignore'))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error removing accented characters: {e}")
+            raise
 
     def replace_diacritics(self):
-        self.X = self.X.apply(lambda x: unidecode(x, errors="preserve"))
-        return self
+        try:
+            self.X = self.X.apply(lambda x: unidecode(x, errors="preserve"))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error replacing diacritics: {e}")
+            raise
 
     def to_lower(self):
-        self.X = self.X.apply(lambda x: " ".join([word.lower() for word in x.split() if word and word not in self.sw_nltk]) if x else '')
-        return self
+        try:
+            self.X = self.X.apply(lambda x: " ".join([word.lower() for word in x.split() if word and word not in self.sw_nltk]) if x else '')
+            return self
+        except Exception as e:
+            app.logger.error(f"Error converting to lower case: {e}")
+            raise
 
     def expand_contractions(self):
-        self.X = self.X.apply(lambda x: " ".join([contractions.fix(expanded_word) for expanded_word in x.split()]))
-        return self
+        try:
+            self.X = self.X.apply(lambda x: " ".join([contractions.fix(expanded_word) for expanded_word in x.split()]))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error expanding contractions: {e}")
+            raise
 
     def remove_numbers(self):
-        self.X = self.X.apply(lambda x: re.sub(r'\d+', '', x))
-        return self
+        try:
+            self.X = self.X.apply(lambda x: re.sub(r'\d+', '', x))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error removing numbers: {e}")
+            raise
 
     def remove_http(self):
-        self.X = self.X.apply(lambda x: re.sub(r'http\S+', '', x))
-        return self
+        try:
+            self.X = self.X.apply(lambda x: re.sub(r'http\S+', '', x))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error removing http links: {e}")
+            raise
     
     def remove_words_with_numbers(self):
-        self.X = self.X.apply(lambda x: re.sub(r'\w*\d\w*', '', x))
-        return self
+        try:
+            self.X = self.X.apply(lambda x: re.sub(r'\w*\d\w*', '', x))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error removing words with numbers: {e}")
+            raise
     
     def remove_digits(self):
-        self.X = self.X.apply(lambda x: re.sub(r'[0-9]+', '', x))
-        return self
+        try:
+            self.X = self.X.apply(lambda x: re.sub(r'[0-9]+', '', x))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error removing digits: {e}")
+            raise
     
     def remove_special_character(self):
-        self.X = self.X.apply(lambda x: re.sub(r'[^a-zA-Z0-9\s]+', ' ', x))
-        return self
+        try:
+            self.X = self.X.apply(lambda x: re.sub(r'[^a-zA-Z0-9\s]+', ' ', x))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error removing special characters: {e}")
+            raise
     
     def remove_white_spaces(self):
-        self.X = self.X.apply(lambda x: re.sub(r'\s+', ' ', x).strip())
-        return self
+        try:
+            self.X = self.X.apply(lambda x: re.sub(r'\s+', ' ', x).strip())
+            return self
+        except Exception as e:
+            app.logger.error(f"Error removing white spaces: {e}")
+            raise
     
     def remove_extra_newlines(self):
-        self.X == self.X.apply(lambda x: re.sub(r'[\r|\n|\r\n]+', ' ', x))
-        return self
+        try:
+            self.X == self.X.apply(lambda x: re.sub(r'[\r|\n|\r\n]+', ' ', x))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error removing extra newlines: {e}")
+            raise
 
     def replace_dots_with_spaces(self):
-        self.X = self.X.apply(lambda x: re.sub("[.]", " ", x))
-        return self
+        try:
+            self.X = self.X.apply(lambda x: re.sub("[.]", " ", x))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error replacing dots with spaces: {e}")
+            raise
 
     def remove_punctuations_except_periods(self):
-        self.X = self.X.apply(lambda x: re.sub('[%s]' % re.escape(self.remove_punctuations), '' , x))
-        return self
+        try:
+            self.X = self.X.apply(lambda x: re.sub('[%s]' % re.escape(self.remove_punctuations), '' , x))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error removing punctuations except periods: {e}")
+            raise
 
     def remove_all_punctuations(self):
-        self.X = self.X.apply(lambda x: re.sub('[%s]' % re.escape(string.punctuation), '' , x))
-        return self
+        try:
+            self.X = self.X.apply(lambda x: re.sub('[%s]' % re.escape(string.punctuation), '' , x))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error removing all punctuations: {e}")
+            raise
 
     def remove_double_spaces(self):
-        self.X = self.X.apply(lambda x: re.sub(' +', '  ', x))
-        return self
+        try:
+            self.X = self.X.apply(lambda x: re.sub(' +', '  ', x))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error removing double spaces: {e}")
+            raise
 
     def fix_typos(self):
-        self.X = self.X.apply(lambda x: str(TextBlob(x).correct()))
-        return self
+        try:
+            self.X = self.X.apply(lambda x: str(TextBlob(x).correct()))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error fixing typos: {e}")
+            raise
 
     def remove_stopwords(self):
-        self.X = self.X.apply(lambda x: " ".join([ word for word in x.split() if word not in self.sw_nltk]))
-        return self
+        try:
+            self.X = self.X.apply(lambda x: " ".join([ word for word in x.split() if word not in self.sw_nltk]))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error removing stopwords: {e}")
+            raise
     
     def remove_singleChar(self):
-        self.X = self.X.apply(lambda x: " ".join([ word for word in x.split() if len(word)>2]))
-        return self
+        try:
+            self.X = self.X.apply(lambda x: " ".join([ word for word in x.split() if len(word)>2]))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error removing single characters: {e}")
+            raise
 
     def lemmatize(self):
-        lemmatizer = WordNetLemmatizer()
-        self.X = self.X.apply(lambda x: " ".join([ lemmatizer.lemmatize(word) for word in x.split()]))
-        return self
+        try:
+            lemmatizer = WordNetLemmatizer()
+            self.X = self.X.apply(lambda x: " ".join([ lemmatizer.lemmatize(word) for word in x.split()]))
+            return self
+        except Exception as e:
+            app.logger.error(f"Error lemmatizing: {e}")
+            raise
 
     def get_processed_text(self):
         return self.X
@@ -161,7 +229,7 @@ try:
     df_all_available_games['game_title_processed'] = processed_text_all_games
     df_user_last_game_played['game_processed'] = processed_text_all_users
 except Exception as e:
-    logger.error(f"Error in data preprocessing: {e}")
+    app.logger.error(f"Error in data preprocessing: {e}")
     raise
 
 # TF-IDF vectorization
@@ -170,7 +238,7 @@ try:
     tfidf_matrix = tfidf.fit_transform(df_all_available_games['game_title_processed'])
     cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
 except Exception as e:
-    logger.error(f"Error in TF-IDF vectorization: {e}")
+    app.logger.error(f"Error in TF-IDF vectorization: {e}")
     raise
 
 def get_content_based_recommendations(game_name, cosine_sim=cosine_sim, df_all_available_games=df_all_available_games):
@@ -186,31 +254,8 @@ def get_content_based_recommendations(game_name, cosine_sim=cosine_sim, df_all_a
             similar_games = [df_all_available_games['game_title_processed'][i[0]] for i in sim_scores]
             return similar_games
     except Exception as e:
-        logger.error(f"Error in getting content-based recommendations: {e}")
+        app.logger.error(f"Error in getting content-based recommendations: {e}")
         raise
-
-def record_metric(metric_name, value):
-    series = monitoring_v3.TimeSeries()
-    series.metric.type = f"custom.googleapis.com/{metric_name}"
-    series.resource.type = "global"
-
-    # Create a new point
-    point = monitoring_v3.Point()
-    point.value.double_value = value
-
-    now = time.time()
-    seconds = int(now)
-    nanos = int((now - seconds) * 10**9)
-    interval = monitoring_v3.TimeInterval({
-        "end_time": {"seconds": seconds, "nanos": nanos}
-    })
-    point.interval = interval
-
-    # Add the point to the time series
-    series.points = [point]
-
-    # Create the time series in Cloud Monitoring
-    monitoring_client.create_time_series(name=project_name, time_series=[series])
 
 @app.route('/recommend', methods=['POST'])
 def recommend():
@@ -219,15 +264,11 @@ def recommend():
         user_id = data.get('user_id', '')
 
         if not user_id:
-            logger.error('recommendation_errors: User ID must be provided')
-            record_metric('recommendation_errors', 1)
             return jsonify({"error": "User ID must be provided"}), 400
 
         # Retrieve last played game for the user
         user_game = df_user_last_game_played[df_user_last_game_played['user_id'] == user_id]['game_processed'].values
         if len(user_game) == 0:
-            logger.error(f'recommendation_errors: No last played game found for user {user_id}')
-            record_metric('recommendation_errors', 1)
             return jsonify({"error": f"No last played game found for user '{user_id}'"}), 404
 
         game_name = user_game[0]
@@ -235,8 +276,6 @@ def recommend():
         # Get recommendations
         idx = df_all_available_games[df_all_available_games['game_title_processed'] == game_name].index
         if len(idx) == 0:
-            logger.error(f'recommendation_errors: No similar games found for the last played game {game_name}')
-            record_metric('recommendation_errors', 1)
             return jsonify({"error": f"No similar games found for the last played game '{game_name}'"}), 404
 
         idx = idx[0]
@@ -257,16 +296,12 @@ def recommend():
                 "recommendation_activity": "user_activity"
             })
 
-        logger.info('recommendation_success: Successfully generated recommendations')
-        record_metric('recommendation_successes', 1)
         return jsonify({
             "last_played_game": game_name,
             "recommendations": recommendations
         })
-
     except Exception as e:
-        logger.error(f'recommendation_errors: Error in recommendation: {e}')
-        record_metric('recommendation_errors', 1)
+        app.logger.error(f"Error in recommendation: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
 def create_and_load_recommendations(df):
@@ -288,7 +323,7 @@ def create_and_load_recommendations(df):
         client.delete_table(table)
         print(f"Dropped table {table_id}")
     except Exception as e:
-        logger.warning(f"Table {table_id} does not exist: {e}")
+        app.logger.warning(f"Table {table_id} does not exist: {e}")
 
     table.clustering_fields = ["user_id"]
     table = client.create_table(table, exists_ok=True)
@@ -302,8 +337,12 @@ def create_and_load_recommendations(df):
     df['recommendation_type'] = df['recommendation_type'].astype(str)
     df['recommendation_activity'] = df['recommendation_activity'].astype(str)
 
-    to_gbq(df, table_id, project_id=table.project, if_exists='append')
-    print('Data loading done')
+    try:
+        to_gbq(df, table_id, project_id=table.project, if_exists='append')
+        print('Data loading done')
+    except Exception as e:
+        app.logger.error(f"Error loading data to BigQuery: {e}")
+        raise
 
 def manage_down_stream_update():
     merge_sql = """
@@ -325,8 +364,12 @@ def manage_down_stream_update():
         AND recommendation_type = 'games' THEN
       DELETE
     """
-    query_job = client.query(merge_sql)
-    query_job.result()
+    try:
+        query_job = client.query(merge_sql)
+        query_job.result()
+    except Exception as e:
+        app.logger.error(f"Error in downstream update: {e}")
+        raise
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
