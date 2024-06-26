@@ -24,7 +24,7 @@ nltk.download('wordnet')
 
 # Set up Google Cloud credentials
 try:
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/Users/mncedisimncwabe/Documents/Personal_Google_Service_Account/ornate-genre-425416-q8-39e4e509df0e.json'
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'ornate-genre-425416-q8-39e4e509df0e.json'
 except Exception as e:
     logger.error("Error setting GOOGLE_APPLICATION_CREDENTIALS: %s", e)
 
