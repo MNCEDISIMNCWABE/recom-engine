@@ -1,6 +1,7 @@
 import os
 import logging
-from datadog import initialize
+from datadog import initialize, statsd
+from datadog import api
 from flask import Flask, jsonify, request
 from recommendation import generate_recommendations, get_last_played_game
 
@@ -15,6 +16,17 @@ initialize(**options)
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# Adding Datadog handler
+from datadog import DogStatsd
+statsd = DogStatsd()
+
+class DatadogHandler(logging.Handler):
+    def emit(self, record):
+        log_entry = self.format(record)
+        statsd.event('Application Log', log_entry)
+
+logger.addHandler(DatadogHandler())
 
 app = Flask(__name__)
 
