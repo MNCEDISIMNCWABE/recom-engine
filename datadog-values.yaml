@@ -1,0 +1,23 @@
+datadog:
+  apiKey: "addbbc5459001afc8c307b8df9021d124ac1256c"
+  appKey: "<YOUR_APP_KEY>"
+  site: "datadoghq.com"
+  logs:
+    enabled: true
+  apm:
+    enabled: true
+  processAgent:
+    enabled: true
+
+agents:
+  containers:
+    agent:
+      env:
+        - name: DD_LOGS_ENABLED
+          value: "true"
+        - name: DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
+          value: "true"
+        - name: DD_APM_ENABLED
+          value: "true"
+        - name: DD_PROCESS_AGENT_ENABLED
+          value: "true"
