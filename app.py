@@ -1,39 +1,27 @@
-import os
-import logging
-from datadog import initialize, statsd
-from datadog import api
 from flask import Flask, jsonify, request
 from recommendation import generate_recommendations, get_last_played_game
+from datadog import initialize, statsd
+
+app = Flask(__name__)
+
+# Configure logging
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+app.logger.setLevel(logging.INFO)
 
 # Datadog configuration
 options = {
     'api_key': '99ff0fb1ea7215302a0338860fa9d373',
-    'app_key': '46a2b52041682068d03a8b49b152083b209141b5'
+    'app_key': '46a2b52041682068d03a8b49b152083b209141b5',
+    'statsd_host': 'localhost',
+    'statsd_port': 8125
 }
-
 initialize(**options)
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-# Adding Datadog handler
-from datadog import DogStatsd
-statsd = DogStatsd()
-
-class DatadogHandler(logging.Handler):
-    def emit(self, record):
-        log_entry = self.format(record)
-        statsd.event('Application Log', log_entry)
-
-logger.addHandler(DatadogHandler())
-
-app = Flask(__name__)
 
 try:
     recommendations_df = generate_recommendations()
 except Exception as e:
-    logger.error(f"Error generating recommendations: {e}")
+    app.logger.error(f"Error generating recommendations: {e}")
     recommendations_df = None
 
 @app.route('/recommend', methods=['POST'])
@@ -56,21 +44,25 @@ def recommend():
 
         last_played_game = get_last_played_game(user_id)
         if not last_played_game:
-            logger.error(f"No last played game found for user '{user_id}'")
+            app.logger.error(f"No last played game found for user '{user_id}'")
+            statsd.increment('recommendation.errors', tags=['type:no_last_played_game'])
             return jsonify({"error": f"No last played game found for user '{user_id}'"}), 404
 
         user_recommendations = recommendations_df[recommendations_df['user_id'] == user_id]
         if user_recommendations.empty:
-            logger.error(f"No recommendations found for user '{user_id}'")
+            app.logger.error(f"No recommendations found for user '{user_id}'")
+            statsd.increment('recommendation.errors', tags=['type:no_recommendations'])
             return jsonify({"error": f"No recommendations found for user '{user_id}'"}), 404
 
         recommendations = user_recommendations.to_dict(orient='records')
+        statsd.increment('recommendation.requests', tags=['status:success'])
         return jsonify({
             "last_played_game": last_played_game,
             "recommendations": recommendations
         })
     except Exception as e:
-        logger.error(f"Error in recommendation: {e}")
+        app.logger.error(f"Error in recommendation: {e}")
+        statsd.increment('recommendation.errors', tags=['type:internal_server_error'])
         return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == '__main__':
