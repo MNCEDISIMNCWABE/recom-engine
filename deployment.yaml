@@ -17,3 +17,8 @@ spec:
         image: gcr.io/ornate-genre-425416-q8/games-rec:latest
         ports:
         - containerPort: 8080
+        env:
+        - name: DD_AGENT_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
