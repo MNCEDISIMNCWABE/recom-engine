@@ -16,8 +16,8 @@ COPY . /app
 # Copy Datadog configuration
 COPY datadog-agent/conf.d/python.d /etc/datadog-agent/conf.d/python.d
 
-# Ensure the logs directory exists and set the correct permissions
-RUN mkdir -p /app/logs
+# Set the correct permissions for the /app/logs directory
+RUN mkdir -p /app/logs && chown -R root:root /app/logs
 
 # Expose port
 EXPOSE 8080
