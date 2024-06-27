@@ -5,12 +5,19 @@ datadog:
   logs:
     enabled: true
   confd:
-    python.d:
-      conf.yaml: |
-        logs_enabled: true
-        logs:
-          - type: file
-            path: /app/logs/flask.log
-            service: flask-app
-            source: python
-            sourcecategory: sourcecode
+    # Mount the custom conf.yaml file for your python logs
+    create: true
+    configMap: datadog-config
+clusterAgent:
+  enabled: true
+  replicas: 2
+  createPodDisruptionBudget: true
+agents:
+  volumes:
+    - name: datadog-config
+      configMap:
+        name: datadog-config
+  volumeMounts:
+    - name: datadog-config
+      mountPath: /etc/datadog-agent/conf.d/python.d
+      subPath: conf.yaml
