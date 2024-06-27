@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the requirements 
+# Copy the requirements
 COPY requirements.txt /app/
 
 # Install any needed packages specified in requirements.txt
@@ -15,6 +15,9 @@ COPY . /app
 
 # Copy Datadog configuration
 COPY datadog-agent/conf.d/python.d /etc/datadog-agent/conf.d/python.d
+
+# Create the logs directory
+RUN mkdir -p /app/logs
 
 # Expose port
 EXPOSE 8080
