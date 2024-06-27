@@ -5,7 +5,6 @@ datadog:
   logs:
     enabled: true
   confd:
-    # Mount the custom conf.yaml file for your python logs
     create: true
     configMap: datadog-config
 clusterAgent:
