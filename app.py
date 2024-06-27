@@ -10,6 +10,12 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 app.logger.setLevel(logging.INFO)
 
+try:
+    recommendations_df = generate_recommendations()
+except Exception as e:
+    app.logger.error(f"Error generating recommendations: {e}")
+    recommendations_df = None
+
 @app.route('/recommend', methods=['POST'])
 def recommend():
     with tracer.trace("flask.request", service="flask-app"):
