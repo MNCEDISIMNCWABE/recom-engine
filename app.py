@@ -2,9 +2,13 @@ from ddtrace import tracer, patch_all
 from flask import Flask, jsonify, request
 from recommendation import generate_recommendations, get_last_played_game
 import logging
+import os
 
 patch_all()
 app = Flask(__name__)
+
+# Ensure logs directory exists
+os.makedirs('/app/logs', exist_ok=True)
 
 # Configure logging to write to a file
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', handlers=[
