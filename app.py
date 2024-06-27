@@ -3,6 +3,7 @@ from ddtrace import tracer, patch_all
 from flask import Flask, jsonify, request
 from recommendation import generate_recommendations, get_last_played_game
 import logging
+import json_log_formatter
 
 patch_all()
 app = Flask(__name__)
@@ -10,12 +11,22 @@ app = Flask(__name__)
 # Ensure logs directory exists
 os.makedirs('/app/logs', exist_ok=True)
 
+# Configure JSON formatter
+formatter = json_log_formatter.JSONFormatter()
+
 # Configure logging to write to a file
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', handlers=[
-    logging.FileHandler("/app/logs/flask.log"),
-    logging.StreamHandler()
-])
+file_handler = logging.FileHandler("/app/logs/flask.log")
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(formatter)
+
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.INFO)
+stream_handler.setFormatter(formatter)
+
+logging.basicConfig(level=logging.INFO, handlers=[file_handler, stream_handler])
 app.logger.setLevel(logging.INFO)
+
+app.logger.info("Flask application has started")
 
 try:
     recommendations_df = generate_recommendations()
