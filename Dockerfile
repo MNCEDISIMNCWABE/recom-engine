@@ -16,5 +16,5 @@ COPY . /app
 # Expose port
 EXPOSE 8080
 
-# Run app.py when the container launches
+# Run app.py with ddtrace
 CMD ["ddtrace-run", "python", "app.py"]
