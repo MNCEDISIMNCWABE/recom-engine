@@ -1,11 +1,19 @@
 from flask import Flask, jsonify, request
 from recommendation import generate_recommendations, get_last_played_game
+import logging
+from ddtrace import patch_all, tracer
+import json_log_formatter
 
 app = Flask(__name__)
 
+# Configure Datadog tracing
+patch_all()
+
 # Configure logging
-import logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+formatter = json_log_formatter.JSONFormatter()
+json_handler = logging.FileHandler(filename='/var/log/flask_app.json')
+json_handler.setFormatter(formatter)
+app.logger.addHandler(json_handler)
 app.logger.setLevel(logging.INFO)
 
 try:
@@ -26,7 +34,6 @@ def recommend():
         if not user_id:
             return jsonify({"error": "User ID must be provided"}), 400
 
-        # Convert user_id to int for comparison
         try:
             user_id = int(user_id)
         except ValueError:
