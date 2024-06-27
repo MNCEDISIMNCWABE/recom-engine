@@ -6,8 +6,11 @@ import logging
 patch_all()
 app = Flask(__name__)
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Configure logging to write to a file
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', handlers=[
+    logging.FileHandler("/app/logs/flask.log"),
+    logging.StreamHandler()
+])
 app.logger.setLevel(logging.INFO)
 
 try:
