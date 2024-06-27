@@ -17,4 +17,4 @@ COPY . /app
 EXPOSE 8080
 
 # Run app.py when the container launches
-CMD ["python", "app.py"]
+CMD ["ddtrace-run", "python", "app.py"]
