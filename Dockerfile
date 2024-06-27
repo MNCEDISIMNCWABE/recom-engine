@@ -1,11 +1,20 @@
-FROM python:3.8-slim
+# Use an official Python runtime as a parent image
+FROM python:3.11-slim
 
-# Install required packages
-RUN pip install flask ddtrace
-
-# Copy application code
-COPY . /app
+# Set the working directory in the container
 WORKDIR /app
+
+# Copy the requirements 
+COPY requirements.txt /app/
+
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the current directory contents into the container at /app
+COPY . /app
+
+# Expose port
+EXPOSE 8080
 
 # Set environment variables for Datadog
 ENV DD_AGENT_HOST=localhost
