@@ -1,7 +1,5 @@
-cat <<EOF > datadog-values.yaml
 datadog:
   logs:
     enabled: true
   apm:
     enabled: true
-EOF
