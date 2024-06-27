@@ -11,10 +11,9 @@ app = Flask(__name__)
 # Ensure logs directory exists
 os.makedirs('/app/logs', exist_ok=True)
 
-# Configure JSON formatter
+# Configure logging to write to a file with JSON format
 formatter = json_log_formatter.JSONFormatter()
 
-# Configure logging to write to a file
 file_handler = logging.FileHandler("/app/logs/flask.log")
 file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(formatter)
