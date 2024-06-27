@@ -22,3 +22,22 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.hostIP
+        - name: DD_ENV
+          value: "production"
+        - name: DD_SERVICE
+          value: "flask_app"
+        - name: DD_VERSION
+          value: "1.0.0"
+        - name: DD_LOGS_ENABLED
+          value: "true"
+        - name: DD_TRACE_ENABLED
+          value: "true"
+        - name: DD_TRACE_ANALYTICS_ENABLED
+          value: "true"
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
