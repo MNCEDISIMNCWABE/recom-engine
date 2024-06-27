@@ -23,4 +23,4 @@ ENV DD_SERVICE=flask_app
 ENV DD_VERSION=1.0.0
 
 # Run the application with ddtrace
-CMD ["ddtrace-run", "python", "app.py"]
+CMD ["ddtrace-run", "gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
