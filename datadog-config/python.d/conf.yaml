@@ -5,7 +5,7 @@ metadata:
   namespace: default
 data:
   conf.yaml: |
-    logs_enabled: "true"
+    logs_enabled: true
     logs:
       - type: file
         path: /app/logs/flask.log
