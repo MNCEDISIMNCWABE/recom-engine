@@ -21,3 +21,14 @@ agents:
           value: "true"
         - name: DD_PROCESS_AGENT_ENABLED
           value: "true"
+
+confd:
+  python.d:
+    init_config: {}
+    instances: {}
+    logs:
+      - type: file
+        path: /var/log/my-log.json
+        service: flask
+        source: python
+        sourcecategory: sourcecode
