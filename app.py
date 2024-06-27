@@ -1,8 +1,8 @@
+import os
 from ddtrace import tracer, patch_all
 from flask import Flask, jsonify, request
 from recommendation import generate_recommendations, get_last_played_game
 import logging
-import os
 
 patch_all()
 app = Flask(__name__)
