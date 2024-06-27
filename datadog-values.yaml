@@ -1,8 +1,59 @@
-datadog:
-  apiKey: "99ff0fb1ea7215302a0338860fa9d373"
-  appKey: "46a2b52041682068d03a8b49b152083b209141b5"
-  site: "us5.datadoghq.com"
-  logs:
-    enabled: true
-  apm:
-    portEnabled: true
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: datadog-agent
+  namespace: default
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: datadog-agent
+  namespace: default
+stringData:
+  api-key: "99ff0fb1ea7215302a0338860fa9d373"
+  app-key: "46a2b52041682068d03a8b49b152083b209141b5"
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: datadog-agent
+  namespace: default
+  labels:
+    app: datadog-agent
+spec:
+  selector:
+    matchLabels:
+      app: datadog-agent
+  template:
+    metadata:
+      labels:
+        app: datadog-agent
+    spec:
+      serviceAccountName: datadog-agent
+      containers:
+        - name: datadog-agent
+          image: "datadog/agent:latest"
+          env:
+            - name: DD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: datadog-agent
+                  key: api-key
+            - name: DD_APP_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: datadog-agent
+                  key: app-key
+            - name: DD_SITE
+              value: "us5.datadoghq.com"
+            - name: DD_LOGS_ENABLED
+              value: "true"
+            - name: DD_APM_ENABLED
+              value: "true"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/datadog-agent
+      volumes:
+        - name: config-volume
+          configMap:
+            name: datadog-agent
