@@ -5,7 +5,6 @@ datadog:
   logs:
     enabled: true
   confd:
-    create: true
     configMap: datadog-config
 clusterAgent:
   enabled: true
