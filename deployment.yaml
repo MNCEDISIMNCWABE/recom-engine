@@ -24,6 +24,8 @@ spec:
           value: "true"
         - name: DD_TRACE_DEBUG
           value: "true"
+        - name: DD_REMOTE_CONFIGURATION_ENABLED
+          value: "true"
         volumeMounts:
         - name: log-volume
           mountPath: /app/logs
