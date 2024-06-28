@@ -20,6 +20,8 @@ spec:
         env:
         - name: DATADOG_ENV
           value: "production"
+        - name: DD_TRACE_ENABLED
+          value: "true"
         - name: DD_TRACE_DEBUG
           value: "true"
         volumeMounts:
