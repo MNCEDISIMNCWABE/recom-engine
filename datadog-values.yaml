@@ -4,6 +4,9 @@ datadog:
   site: 'us5.datadoghq.com'
   logs:
     enabled: true
+  apm:
+    enabled: true
+    port: 8126
   confd:
     configMap: datadog-config
 clusterAgent:
