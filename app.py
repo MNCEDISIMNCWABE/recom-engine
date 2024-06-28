@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 from recommendation import generate_recommendations, get_last_played_game
 import logging
 from logging.handlers import RotatingFileHandler
-from ddtrace import tracer, patch_all
+from ddtrace import tracer, patch_all, config
 
 # Enable Datadog tracing
 patch_all()
@@ -18,22 +18,26 @@ file_handler.setFormatter(log_formatter)
 app.logger.addHandler(file_handler)
 app.logger.setLevel(logging.INFO)
 
+# Set Datadog APM environment and service name
+config.env = "production"
+config.service = "games-reco-test"
+
 try:
     recommendations_df = generate_recommendations()
 except Exception as e:
     app.logger.error(f"Error generating recommendations: {e}")
     recommendations_df = None
 
-@tracer.wrap(name='generate_recommendations')
+@tracer.wrap(name='generate_recommendations', service='games-reco-test')
 def wrapped_generate_recommendations():
     return generate_recommendations()
 
-@tracer.wrap(name='get_last_played_game')
+@tracer.wrap(name='get_last_played_game', service='games-reco-test')
 def wrapped_get_last_played_game(user_id):
     return get_last_played_game(user_id)
 
 @app.route('/recommend', methods=['POST'])
-@tracer.wrap(name='recommend')
+@tracer.wrap(name='recommend', service='games-reco-test')
 def recommend():
     try:
         if recommendations_df is None:
@@ -45,7 +49,6 @@ def recommend():
         if not user_id:
             return jsonify({"error": "User ID must be provided"}), 400
 
-        # Convert user_id to int for comparison
         try:
             user_id = int(user_id)
         except ValueError:
