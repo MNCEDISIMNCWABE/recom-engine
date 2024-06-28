@@ -1,19 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: games-rec
+  name: games-reco-test
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: games-rec
+      app: games-reco-test
   template:
     metadata:
       labels:
-        app: games-rec
+        app: games-reco-test
     spec:
       containers:
-      - name: games-rec
-        image: gcr.io/ornate-genre-425416-q8/games-rec:latest
+      - name: games-reco-test
+        image: gcr.io/ornate-genre-425416-q8/games-reco-test:latest
         ports:
         - containerPort: 8080
+        env:
+        - name: DATADOG_ENV
+          value: "production"
+        - name: DD_TRACE_DEBUG
+          value: "true"
+        volumeMounts:
+        - name: log-volume
+          mountPath: /app/logs
+      volumes:
+      - name: log-volume
+        emptyDir: {}
