@@ -13,3 +13,8 @@ datadog:
     enabled: true  # Ensure APM is enabled
     portEnabled: true
     env: "production"
+
+  agent:
+    env:
+      - name: DD_REMOTE_CONFIGURATION_ENABLED
+        value: "true"
