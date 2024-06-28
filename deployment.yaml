@@ -2,6 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: games-reco-test
+  labels:
+    tags.datadoghq.com/env: production
+    tags.datadoghq.com/service: games-reco-test
+    tags.datadoghq.com/version: v1
 spec:
   replicas: 3
   selector:
@@ -11,6 +15,12 @@ spec:
     metadata:
       labels:
         app: games-reco-test
+        tags.datadoghq.com/env: production
+        tags.datadoghq.com/service: games-reco-test
+        tags.datadoghq.com/version: v1
+        admission.datadoghq.com/enabled: "true"
+      annotations:
+        admission.datadoghq.com/python-lib.version: v2.9.2
     spec:
       containers:
       - name: games-reco-test
