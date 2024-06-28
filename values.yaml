@@ -18,3 +18,12 @@ datadog:
     env:
       - name: DD_REMOTE_CONFIGURATION_ENABLED
         value: "true"
+      - name: DD_LOGS_INJECTION
+        value: "true"
+
+  containers:
+    ports:
+      - containerPort: 8126
+        hostPort: 8126
+        name: traceport
+        protocol: TCP
