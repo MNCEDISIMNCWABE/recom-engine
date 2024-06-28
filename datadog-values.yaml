@@ -1,24 +1,14 @@
 datadog:
   apiKey: 99ff0fb1ea7215302a0338860fa9d373
   appKey: 46a2b52041682068d03a8b49b152083b209141b5
-  site: 'us5.datadoghq.com'
+  site: "datadoghq.com"
+
   logs:
     enabled: true
+    containerCollectAll: true
+    containerCollectUsingFiles: true
+    containerCollectUsingVolumes: true
+
   apm:
     enabled: true
-    port: 8126
-  confd:
-    configMap: datadog-config
-clusterAgent:
-  enabled: true
-  replicas: 2
-  createPodDisruptionBudget: true
-agents:
-  volumes:
-    - name: datadog-config
-      configMap:
-        name: datadog-config
-  volumeMounts:
-    - name: datadog-config
-      mountPath: /etc/datadog-agent/conf.d/python.d
-      subPath: conf.yaml
+    env: "production"
