@@ -17,3 +17,4 @@ pandas-gbq
 datadog
 json_log_formatter
 ddtrace
+statsd
