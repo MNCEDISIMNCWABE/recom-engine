@@ -5,9 +5,9 @@ datadog:
   
   logs:
     enabled: true
-    containerCollectAll: true
-    containerCollectUsingFiles: true
-    containerCollectUsingVolumes: true
+    containerCollectAll: fales
+    containerCollectUsingFiles: fales
+    containerCollectUsingVolumes: fales
 
   apm:
     enabled: true 
