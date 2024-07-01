@@ -17,8 +17,6 @@ spec:
         image: gcr.io/ornate-genre-425416-q8/games-reco-test:latest
         ports:
         - containerPort: 8080
-        - containerPort: 8125
-          protocol: UDP
         env:
         - name: DATADOG_ENV
           value: "production"
@@ -26,15 +24,18 @@ spec:
           value: "true"
         - name: DD_TRACE_DEBUG
           value: "true"
-        - name: DD_REMOTE_CONFIGURATION_ENABLED
-          value: "true"
         - name: DD_APM_ENABLED
           value: "true"
-        - name: DD_DOGSTATSD_PORT
-          value: "8125"
+        - name: DD_LOGS_ENABLED
+          value: "true" 
         volumeMounts:
         - name: log-volume
           mountPath: /app/logs
+        - name: datadog-config
+          mountPath: /etc/datadog-agent/conf.d/python.d
       volumes:
-      - name: log-volume
+    - name: log-volume
         emptyDir: {}
+      - name: datadog-config
+        configMap:
+          name: datadog-config
