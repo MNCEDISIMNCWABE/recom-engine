@@ -28,6 +28,13 @@ spec:
           value: "true"
         - name: DD_LOGS_ENABLED
           value: "true" 
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
         volumeMounts:
         - name: log-volume
           mountPath: /app/logs
