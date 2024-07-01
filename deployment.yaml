@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: games-reco-test
+  name: games-recom-test
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: games-reco-test
+      app: games-recom-test
   template:
     metadata:
       labels:
-        app: games-reco-test
+        app: games-recom-test
     spec:
       containers:
-      - name: games-reco-test
-        image: gcr.io/ornate-genre-425416-q8/games-reco-test:latest
+      - name: games-recom-test
+        image: gcr.io/ornate-genre-425416-q8/games-recom-test:latest
         ports:
         - containerPort: 8080
         env:
