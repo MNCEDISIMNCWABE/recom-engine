@@ -1,0 +1,50 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: games-recom-test
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: games-recom-test
+  template:
+    metadata:
+      labels:
+        app: games-recom-test
+    spec:
+      containers:
+      - name: games-recom-test
+        image: us-central1-docker.pkg.dev/ayoba-183a7/gcf-artifacts/games-recom-test:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /var/secrets/google/key.json
+        - name: DATADOG_ENV
+          value: "production"
+        - name: DD_TRACE_ENABLED
+          value: "true"
+        - name: DD_TRACE_DEBUG
+          value: "true"
+        - name: DD_APM_ENABLED
+          value: "true"
+        - name: DD_LOGS_ENABLED
+          value: "true" 
+        volumeMounts:
+        - name: gcp-sa-key
+          mountPath: /var/secrets/google
+          readOnly: true
+        - name: log-volume
+          mountPath: /app/logs
+        - name: datadog-config
+          mountPath: /etc/datadog-agent/conf.d/python.d
+      volumes:
+      - name: gcp-sa-key
+        secret:
+          secretName: gcp-sa-key
+      - name: log-volume
+        emptyDir: {}
+      - name: datadog-config
+        configMap:
+          name: datadog-config
