@@ -28,6 +28,8 @@ spec:
           value: "true"
         - name: DD_LOGS_ENABLED
           value: "true" 
+        - name: DD_REMOTE_CONFIGURATION_ENABLED
+          value: "true"
         resources:
           requests:
             memory: "512Mi"
