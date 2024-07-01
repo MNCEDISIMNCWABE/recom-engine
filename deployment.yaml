@@ -34,7 +34,7 @@ spec:
         - name: datadog-config
           mountPath: /etc/datadog-agent/conf.d/python.d
       volumes:
-    - name: log-volume
+      - name: log-volume
         emptyDir: {}
       - name: datadog-config
         configMap:
