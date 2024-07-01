@@ -10,7 +10,7 @@ datadog:
     containerCollectUsingVolumes: true
 
   apm:
-    enabled: true  # Ensure APM is enabled
+    enabled: true  
     portEnabled: true
     env: "production"
 
