@@ -85,26 +85,26 @@ def index():
 def recommend():
     try:
         if recommendations_df is None:
-            statsd.increment('recommend.error', tags=["type:no_recommendations"])
+            statsd.increment('recom_test.error', tags=["type:no_recommendations"])
             return jsonify({"error": "No recommendations generated."}), 500
 
         data = request.get_json()
         user_id = data.get('user_id', '')
 
         if not user_id:
-            statsd.increment('recommend.error', tags=["type:missing_user_id"])
+            statsd.increment('recom_test.error', tags=["type:missing_user_id"])
             return jsonify({"error": "User ID must be provided"}), 400
 
         last_played_game = wrapped_get_last_played_game(user_id)
         if not last_played_game:
             app.logger.error(f"No last played game found for user '{user_id}'")
-            statsd.increment('recommend.error', tags=["type:no_last_played_game"])
+            statsd.increment('recom_test.error', tags=["type:no_last_played_game"])
             return jsonify({"error": f"No last played game found for user '{user_id}'"}), 404
 
         user_recommendations = recommendations_df[recommendations_df['user_id'] == user_id]
         if user_recommendations.empty:
             app.logger.error(f"No recommendations found for user '{user_id}'")
-            statsd.increment('recommend.error', tags=["type:no_recommendations_for_user"])
+            statsd.increment('recom_test.error', tags=["type:no_recommendations_for_user"])
             return jsonify({"error": f"No recommendations found for user '{user_id}'"}), 404
 
         recommendations = user_recommendations.to_dict(orient='records')
@@ -114,7 +114,7 @@ def recommend():
         })
     except Exception as e:
         app.logger.error(f"Error in recommendation: {e}")
-        statsd.increment('recommend.error', tags=["type:internal_error"])
+        statsd.increment('recom_test.error', tags=["type:internal_error"])
         return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == '__main__':
