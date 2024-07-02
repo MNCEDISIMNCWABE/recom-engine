@@ -8,8 +8,10 @@ datadog:
     containerCollectAll: true
 
   apm:
-    enabled: true
+    socketEnabled: true
     portEnabled: true
+    enabled: false
+    port: 8126
     env: "production"
 
   dogstatsd:
