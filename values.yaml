@@ -9,7 +9,7 @@ datadog:
 
   apm:
     enabled: true
-    portEnabled: false
+    portEnabled: true
     env: "production"
 
   dogstatsd:
