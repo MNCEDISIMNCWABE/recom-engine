@@ -79,7 +79,7 @@ def index():
     response = api.Metric.send(
         metric='recom_test_app.request_count',
         points=1,
-        tags=["app:flask", "environment:dev"]
+        tags=["app:flask", "environment:production"]
     )
     app.logger.debug(f'Datadog API response: {response}')
     return jsonify({"message": "Welcome to the Flask API with Datadog integration!"})
