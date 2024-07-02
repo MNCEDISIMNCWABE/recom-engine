@@ -2,16 +2,14 @@ datadog:
   apiKey: 99ff0fb1ea7215302a0338860fa9d373
   appKey: 46a2b52041682068d03a8b49b152083b209141b5
   site: "us5.datadoghq.com"
-  
+
   logs:
     enabled: true
-    containerCollectAll: false
-    containerCollectUsingFiles: false
-    containerCollectUsingVolumes: false
+    containerCollectAll: true
 
   apm:
-    enabled: true 
-    portEnabled: true
+    enabled: true
+    portEnabled: false
     env: "production"
 
   dogstatsd:
@@ -27,8 +25,6 @@ datadog:
         value: "true"
       - name: DD_APM_ENABLED
         value: "true"
-      - name: DD_REMOTE_CONFIGURATION_ENABLED
-        value: "true"
     volumeMounts:
       - name: datadog-config
         mountPath: /etc/datadog-agent/conf.d/python.d
@@ -36,3 +32,37 @@ datadog:
       - name: datadog-config
         configMap:
           name: datadog-config
+
+  daemonset:
+    useHostPID: false
+    useHostPort: false
+
+  agents:
+    trace:
+      enabled: true
+      port: 8126  # Make sure this port is not bound to the host
+    process:
+      enabled: true
+      port: 8126  # Make sure this port is not bound to the host
+
+  containers:
+    - name: agent
+      volumeMounts:
+        - mountPath: /var/log/datadog
+          name: allowed-log-path
+    - name: trace-agent
+      volumeMounts:
+        - mountPath: /var/log/datadog
+          name: allowed-log-path
+    - name: process-agent
+      volumeMounts:
+        - mountPath: /var/log/datadog
+          name: allowed-log-path
+
+  volumes:
+    - name: allowed-log-path
+      hostPath:
+        path: /var/log/datadog
+    - name: datadog-config
+      configMap:
+        name: datadog-config
