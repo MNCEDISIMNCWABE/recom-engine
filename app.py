@@ -4,7 +4,7 @@ from recommendation import generate_recommendations, get_last_played_game
 import logging
 from logging.handlers import RotatingFileHandler
 from ddtrace import tracer, patch_all, config
-from datadog import statsd
+from datadog import statsd, initialize, api
 
 # Enable Datadog tracing
 patch_all()
