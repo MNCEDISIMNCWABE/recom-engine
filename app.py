@@ -9,6 +9,10 @@ from datadog import statsd, initialize, api
 # Enable Datadog tracing
 patch_all()
 
+# Configure the tracer to use the Kubernetes service DNS of Datadog agent
+config.tracer.hostname = 'datadog-agent.default.svc.cluster.local'
+config.tracer.port = 8126
+
 # Initialize Flask app
 app = Flask(__name__)
 
