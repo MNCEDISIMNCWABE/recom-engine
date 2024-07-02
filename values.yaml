@@ -10,7 +10,7 @@ datadog:
   apm:
     socketEnabled: true
     portEnabled: true
-    enabled: false
+    enabled: true
     port: 8126
     env: "production"
 
