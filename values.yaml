@@ -27,6 +27,8 @@ datadog:
         value: "true"
       - name: DD_APM_ENABLED
         value: "true"
+      - name: DD_REMOTE_CONFIGURATION_ENABLED
+        value: "false"
     volumeMounts:
       - name: datadog-config
         mountPath: /etc/datadog-agent/conf.d/python.d
