@@ -6,6 +6,13 @@ from logging.handlers import RotatingFileHandler
 from ddtrace import tracer, patch_all, config
 from datadog import statsd, initialize, api
 
+# Datadog API key and application key configuration for testing
+options = {
+    'api_key': '99ff0fb1ea7215302a0338860fa9d373',
+    'app_key': '46a2b52041682068d03a8b49b152083b209141b5'
+}
+initialize(**options)
+
 # Enable Datadog tracing
 patch_all()
 
