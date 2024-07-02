@@ -9,7 +9,7 @@ from datadog import statsd, initialize, api
 # Enable Datadog tracing
 patch_all()
 
-# Configure the tracer to use the Kubernetes service DNS of Datadog agent
+# Set the Datadog tracer configuration to the ClusterIP service of Datadog agent
 config.tracer.hostname = 'datadog-agent.default.svc.cluster.local'
 config.tracer.port = 8126
 
