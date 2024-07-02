@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: datadog-agent
+spec:
+  selector:
+    app: datadog-agent
+  ports:
+    - name: dogstatsdport
+      protocol: UDP
+      port: 8125
+      targetPort: 8125
+    - name: traceport
+      protocol: TCP
+      port: 8126
+      targetPort: 8126
+  type: ClusterIP
