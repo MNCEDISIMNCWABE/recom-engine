@@ -33,8 +33,8 @@ datadog:
         value: "production"
       - name: DD_TRACE_ENABLED
         value: "true"
-      - name: DD_TRACE_DEBUG
-        value: "true"
+      # - name: DD_TRACE_DEBUG
+      #   value: "true"
       - name: DD_LOGS_ENABLED
         value: "true"
     volumeMounts:
@@ -79,10 +79,10 @@ datadog:
       configMap:
         name: datadog-config
 
-  clusterAgent:
-    enabled: true
-    token: bd821320f5b6ce95ba53ee949b456a57dade1113d0fc23660ceeb4208a2bc468
-    config:
-      clusterChecks: true
-      externalMetricsProvider:
-        enabled: true
+  # clusterAgent:
+  #   enabled: true
+  #   token: bd821320f5b6ce95ba53ee949b456a57dade1113d0fc23660ceeb4208a2bc468
+  #   config:
+  #     clusterChecks: true
+  #     externalMetricsProvider:
+  #       enabled: true
