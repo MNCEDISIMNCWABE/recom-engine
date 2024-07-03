@@ -34,7 +34,7 @@ datadog:
       - name: DD_TRACE_ENABLED
         value: "true"
       - name: DD_TRACE_DEBUG
-        value: "true"
+        value: "false"
       - name: DD_LOGS_ENABLED
         value: "true"
     volumeMounts:
