@@ -72,9 +72,9 @@ def pre_process_recommendation(recommendations_df):
 
 def generate_recommendations():
     try:
-        logging.info("Generating content-based recommendations...")
+        #logging.info("Generating content-based recommendations...")
         recommendations_df = get_recommendations_df()
-        logging.info("Content-based recommendations generated.")
+        #logging.info("Content-based recommendations generated.")
         return pre_process_recommendation(recommendations_df)
     except Exception as e:
         logging.error(f"Error generating recommendations: {e}")
@@ -86,7 +86,7 @@ def get_last_played_game(user_id, df_user_last_game_played=df_user_last_game_pla
         if len(user_game) == 0:
             logging.info(f"No last played game found for user '{user_id}'")
             return None
-        logging.info(f"Last played game for user '{user_id}' is '{user_game[0]}'")
+        #logging.info(f"Last played game for user '{user_id}' is '{user_game[0]}'")
         return user_game[0]
     except Exception as e:
         logging.error(f"Error getting last played game for user '{user_id}': {e}")
