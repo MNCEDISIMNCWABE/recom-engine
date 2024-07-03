@@ -56,8 +56,7 @@ def pre_process_recommendation(recommendations_df):
         df_user_rec = df_user_last_game_played[['user_id', 'game_processed']]
         df_user_games_recommendations = pd.merge(df_user_rec, df_merged_reco, left_on='game_processed', right_on='game_name', how='left')
 
-        df_user_games_recommendations['ranking'].fillna(-1, inplace=True)
-        df_user_games_recommendations['ranking'] = df_user_games_recommendations['ranking'].astype(int)
+        df_user_games_recommendations['ranking'] = df_user_games_recommendations['ranking'].fillna(-1).astype(int)
         df_user_games_recommendations['country'] = ''
         df_user_games_recommendations['city'] = ''
         df_user_games_recommendations['recommendation_type'] = 'games'
