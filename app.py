@@ -117,8 +117,8 @@ def recommend():
               type: object
               properties:
                 user_id:
-                  type: string
-                  example: "user +27732819038"
+                  type: integer
+                  example: 2250545356890
         responses:
             200:
                 description: Returns game recommendations.
