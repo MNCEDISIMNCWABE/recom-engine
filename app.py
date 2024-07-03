@@ -2,9 +2,10 @@ from flask import Flask, jsonify, request
 from recommendation import generate_recommendations, get_last_played_game
 import logging
 from logging.handlers import RotatingFileHandler
-from ddtrace import tracer, patch_all, config
+from ddtrace import patch_all, tracer, config
 from datadog import statsd, initialize, api
 from flasgger import Swagger
+import json_log_formatter
 
 # Datadog API key and application key configuration for testing
 options = {
@@ -24,13 +25,13 @@ config.tracer.port = 8126
 app = Flask(__name__)
 swagger = Swagger(app)  # Initialize Swagger
 
-# Configure logging
-log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-log_file = '/app/logs/flask.log'
-file_handler = RotatingFileHandler(log_file, maxBytes=10240, backupCount=10)
-file_handler.setFormatter(log_formatter)
-app.logger.addHandler(file_handler)
-app.logger.setLevel(logging.INFO)
+# Configure JSON logging
+formatter = json_log_formatter.JSONFormatter()
+json_handler = logging.FileHandler(filename='/app/logs/my-log.json')
+json_handler.setFormatter(formatter)
+logger = logging.getLogger('my_json')
+logger.addHandler(json_handler)
+logger.setLevel(logging.INFO)
 
 # Set Datadog APM environment and service name
 config.env = "production"
@@ -76,10 +77,11 @@ def wrapped_get_last_played_game(user_id):
 try:
     recommendations_df = wrapped_generate_recommendations()
 except Exception as e:
-    app.logger.error(f"Error generating recommendations: {e}")
+    logger.error(f"Error generating recommendations: {e}")
     recommendations_df = None
 
 @app.route('/')
+@tracer.wrap()
 def index():
     """Landing page route.
     ---
@@ -89,18 +91,18 @@ def index():
             200:
                 description: Returns a welcome message and a successful API response from Datadog.
     """
-    logging.info('Index route accessed')
+    logger.info('Index route accessed')
     statsd.increment('index.page_views')
     response = api.Metric.send(
         metric='recom_test_app.request_count',
         points=1,
         tags=["app:flask", "environment:production"]
     )
-    app.logger.debug(f'Datadog API response: {response}')
+    logger.debug(f'Datadog API response: {response}')
     return jsonify({"message": "Welcome to the Flask API with Datadog integration!"})
 
 @app.route('/recommend', methods=['POST'])
-@tracer.wrap(name='recommend', service='games-recom-test')
+@tracer.wrap()
 def recommend():
     """Post endpoint to generate game recommendations.
     ---
@@ -141,13 +143,13 @@ def recommend():
 
         last_played_game = wrapped_get_last_played_game(user_id)
         if not last_played_game:
-            app.logger.error(f"No last played game found for user '{user_id}'")
+            logger.error(f"No last played game found for user '{user_id}'")
             statsd.increment('recom_test.error', tags=["type:no_last_played_game"])
             return jsonify({"error": f"No last played game found for user '{user_id}'"}), 404
 
         user_recommendations = recommendations_df[recommendations_df['user_id'] == user_id]
         if user_recommendations.empty:
-            app.logger.error(f"No recommendations found for user '{user_id}'")
+            logger.error(f"No recommendations found for user '{user_id}'")
             statsd.increment('recom_test.error', tags=["type:no_recommendations_for_user"])
             return jsonify({"error": f"No recommendations found for user '{user_id}'"}), 404
 
@@ -157,7 +159,7 @@ def recommend():
             "recommendations": recommendations
         })
     except Exception as e:
-        app.logger.error(f"Error in recommendation: {e}")
+        logger.error(f"Error in recommendation: {e}")
         statsd.increment('recom_test.error', tags=["type:internal_error"])
         return jsonify({"error": "Internal server error"}), 500
 
