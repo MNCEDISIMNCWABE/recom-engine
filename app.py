@@ -1,10 +1,10 @@
-
 from flask import Flask, jsonify, request
 from recommendation import generate_recommendations, get_last_played_game
 import logging
 from logging.handlers import RotatingFileHandler
 from ddtrace import tracer, patch_all, config
 from datadog import statsd, initialize, api
+from flasgger import Swagger
 
 # Datadog API key and application key configuration for testing
 options = {
@@ -22,13 +22,13 @@ config.tracer.port = 8126
 
 # Initialize Flask app
 app = Flask(__name__)
+swagger = Swagger(app)  # Initialize Swagger
 
 # Configure logging
 log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 log_file = '/app/logs/flask.log'
 file_handler = RotatingFileHandler(log_file, maxBytes=10240, backupCount=10)
 file_handler.setFormatter(log_formatter)
-
 app.logger.addHandler(file_handler)
 app.logger.setLevel(logging.INFO)
 
@@ -81,6 +81,14 @@ except Exception as e:
 
 @app.route('/')
 def index():
+    """Landing page route.
+    ---
+    get:
+        description: Welcome to the Flask API integrated with Datadog.
+        responses:
+            200:
+                description: Returns a welcome message and a successful API response from Datadog.
+    """
     logging.info('Index route accessed')
     statsd.increment('index.page_views')
     response = api.Metric.send(
@@ -94,17 +102,42 @@ def index():
 @app.route('/recommend', methods=['POST'])
 @tracer.wrap(name='recommend', service='games-recom-test')
 def recommend():
+    """Post endpoint to generate game recommendations.
+    ---
+    post:
+        description: Uses the user_id to fetch and generate game recommendations.
+        parameters:
+          - in: body
+            name: body
+            description: JSON object containing the user_id.
+            required: true
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                  example: "user +27732819038"
+        responses:
+            200:
+                description: Returns game recommendations.
+            400:
+                description: Error if user_id is not provided.
+            404:
+                description: Error if no data is found for the user_id.
+            500:
+                description: Internal server error.
+    """
     try:
-        if recommendations_df is None:
-            statsd.increment('recom_test.error', tags=["type:no_recommendations"])
-            return jsonify({"error": "No recommendations generated."}), 500
-
         data = request.get_json()
         user_id = data.get('user_id', '')
 
         if not user_id:
             statsd.increment('recom_test.error', tags=["type:missing_user_id"])
             return jsonify({"error": "User ID must be provided"}), 400
+
+        if recommendations_df is None:
+            statsd.increment('recom_test.error', tags=["type:no_recommendations"])
+            return jsonify({"error": "No recommendations generated."}), 500
 
         last_played_game = wrapped_get_last_played_game(user_id)
         if not last_played_game:
