@@ -3,6 +3,7 @@ from recommendation import generate_recommendations, get_last_played_game
 import logging
 from logging.handlers import RotatingFileHandler
 from ddtrace import patch_all, tracer, config
+from ddtrace.internal.logger import get_logger
 from datadog import statsd, initialize, api
 from flasgger import Swagger
 import json_log_formatter
@@ -33,6 +34,9 @@ file_handler.setFormatter(log_formatter)
 
 app.logger.addHandler(file_handler)
 app.logger.setLevel(logging.INFO)
+
+dd_logger = get_logger('ddtrace')
+dd_logger.setLevel(logging.WARNING) 
 
 # Set Datadog APM environment and service name
 config.env = "production"
