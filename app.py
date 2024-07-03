@@ -25,13 +25,14 @@ config.tracer.port = 8126
 app = Flask(__name__)
 swagger = Swagger(app)  # Initialize Swagger
 
-# Configure JSON logging
-formatter = json_log_formatter.JSONFormatter()
-json_handler = logging.FileHandler(filename='/app/logs/my-log.json')
-json_handler.setFormatter(formatter)
-logger = logging.getLogger('my_json')
-logger.addHandler(json_handler)
-logger.setLevel(logging.INFO)
+# Configure logging
+log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+log_file = '/app/logs/flask.log'
+file_handler = RotatingFileHandler(log_file, maxBytes=10240, backupCount=10)
+file_handler.setFormatter(log_formatter)
+
+app.logger.addHandler(file_handler)
+app.logger.setLevel(logging.INFO)
 
 # Set Datadog APM environment and service name
 config.env = "production"
