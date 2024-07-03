@@ -37,6 +37,8 @@ datadog:
         value: "false"
       - name: DD_LOGS_ENABLED
         value: "true"
+      - name: DD_LOG_LEVEL
+        value: "error"
     volumeMounts:
       - name: datadog-config
         mountPath: /etc/datadog-agent/conf.d/python.d
