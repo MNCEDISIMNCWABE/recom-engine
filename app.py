@@ -78,13 +78,14 @@ def wrapped_get_last_played_game(user_id):
 try:
     recommendations_df = wrapped_generate_recommendations()
 except Exception as e:
-    logger.error(f"Error generating recommendations: {e}")
+    app.logger.error(f"Error generating recommendations: {e}")
     recommendations_df = None
 
 @app.route('/')
 @tracer.wrap()
 def index():
-    """Landing page route.
+    """
+    Landing page route.
     ---
     get:
         description: Welcome to the Flask API integrated with Datadog.
@@ -92,14 +93,14 @@ def index():
             200:
                 description: Returns a welcome message and a successful API response from Datadog.
     """
-    logger.info('Index route accessed')
+    app.logger.info('Index route accessed')
     statsd.increment('index.page_views')
     response = api.Metric.send(
         metric='recom_test_app.request_count',
         points=1,
         tags=["app:flask", "environment:production"]
     )
-    logger.debug(f'Datadog API response: {response}')
+    app.logger.debug(f'Datadog API response: {response}')
     return jsonify({"message": "Welcome to the Flask API with Datadog integration!"})
 
 @app.route('/recommend', methods=['POST'])
@@ -172,13 +173,13 @@ def recommend():
 
         last_played_game = wrapped_get_last_played_game(user_id)
         if not last_played_game:
-            logger.error(f"No last played game found for user '{user_id}'")
+            app.logger.error(f"No last played game found for user '{user_id}'")
             statsd.increment('recom_test.error', tags=["type:no_last_played_game"])
             return jsonify({"error": f"No last played game found for user '{user_id}'"}), 404
 
         user_recommendations = recommendations_df[recommendations_df['user_id'] == user_id]
         if user_recommendations.empty:
-            logger.error(f"No recommendations found for user '{user_id}'")
+            app.logger.error(f"No recommendations found for user '{user_id}'")
             statsd.increment('recom_test.error', tags=["type:no_recommendations_for_user"])
             return jsonify({"error": f"No recommendations found for user '{user_id}'"}), 404
 
@@ -188,7 +189,7 @@ def recommend():
             "recommendations": recommendations
         })
     except Exception as e:
-        logger.error(f"Error in recommendation: {e}")
+        app.logger.error(f"Error in recommendation: {e}")
         statsd.increment('recom_test.error', tags=["type:internal_error"])
         return jsonify({"error": "Internal server error"}), 500
 
