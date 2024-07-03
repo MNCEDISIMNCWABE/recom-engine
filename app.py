@@ -105,30 +105,58 @@ def index():
 @app.route('/recommend', methods=['POST'])
 @tracer.wrap()
 def recommend():
-    """Post endpoint to generate game recommendations.
+    """
+    Post endpoint to generate game recommendations.
     ---
-    post:
-        description: Uses the user_id to fetch and generate game recommendations.
-        parameters:
-          - in: body
-            name: body
-            description: JSON object containing the user_id.
-            required: true
-            schema:
-              type: object
-              properties:
-                user_id:
-                  type: integer
-                  example: 2250545356890
-        responses:
-            200:
-                description: Returns game recommendations.
-            400:
-                description: Error if user_id is not provided.
-            404:
-                description: Error if no data is found for the user_id.
-            500:
-                description: Internal server error.
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            user_id:
+              type: integer
+              description: The user ID to fetch recommendations for
+              example: 2250545356890
+    responses:
+      200:
+        description: Returns game recommendations
+        schema:
+          type: object
+          properties:
+            last_played_game:
+              type: string
+              description: Last played game
+            recommendations:
+              type: array
+              items:
+                type: object
+                description: Game recommendation
+      400:
+        description: Error if user_id is not provided
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              description: Error message
+      404:
+        description: Error if no data is found for the user_id
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              description: Error message
+      500:
+        description: Internal server error
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              description: Error message
     """
     try:
         data = request.get_json()
