@@ -33,11 +33,11 @@ file_handler = RotatingFileHandler(log_file, maxBytes=10240, backupCount=10)
 file_handler.setFormatter(log_formatter)
 
 app.logger.addHandler(file_handler)
-app.logger.setLevel(logging.WARNING)  
+app.logger.setLevel(logging.ERROR)  
 
-# Set Datadog internal logger to WARNING to avoid excessive debug and info logs
+# Set Datadog internal logger to ERROR to avoid excessive debug and info logs
 dd_logger = get_logger('ddtrace')
-dd_logger.setLevel(logging.WARNING)
+dd_logger.setLevel(logging.ERROR)
 
 # Set Datadog APM environment and service name
 config.env = "production"
